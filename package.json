@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "soma.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@prisma/client": "^5.16.2",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^10.9.1",
+    "prisma": "^5.16.2",
+    "prisma-erd-generator": "^1.11.2",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}
