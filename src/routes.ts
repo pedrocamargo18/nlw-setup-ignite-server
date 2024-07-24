@@ -78,5 +78,81 @@ export async function appRoutes(app : FastifyInstance){
             completedHabits
         }
     })
+
+    //completar /nao-completar um habito
+    app.patch('/habits/:id/toggle', async(request) => {
+        //:id route param -> parametro de identificação
+        
+        const toggleHabitParams = z.object({
+            id: z.string().uuid(),
+
+        })
+
+        const {id} = toggleHabitParams.parse(request.params)
+        
+        const today = dayjs().startOf('day').toDate()
+        
+        let day = await prisma.day.findUnique({
+            where: {
+                date: today,
+            }
+        })
+
+        if(day){
+           day = await prisma.day.create({
+            data:{
+                date: today,
+            }
+           }) 
+        }
+
+        const dayHabit = await prisma.dayHabit.findUnique({
+            where:{
+                 day_id_habit_id:{
+                    day_id: day.id,
+                    habit_id: id,
+                 }
+            }
+        })
+
+        if(dayHabit){
+            //remover a marcação do completo
+            await prisma.day.delete({
+                where:{
+                    id: dayHabit.id,
+                }
+            })
+        }else{
+            //Completar o habito nesse dia
+            await prisma.dayHabit.create({
+                data:{
+                    day_id: day.id,
+                    habit_id: id,
+                }
+            })
+
+        }
+
+    })
+
+    app.get('/summary', async() =>{
+        // quanto mais requisicao e condicao = SQL NA MAO
+        // PRISMA ORM = RAW SQL => SQLITE
+
+        const summary = await prisma.$queryRaw`
+        SELECT D.id, D.date,
+        (select cast(count(*) as float) from day_habits DH where DH.day_id = D.id ) as completed,
+        (select cast(count(*) as float) from habit_week_days HWD 
+        JOIN habits H on H.id = HWD.habit_id
+        Where  HWD.week_day = cast(strftime('%w', D.date/1000.0, 'unixepoch') as int )
+        and H.created_at <= D.date
+         ) as amount
+        FROM days D
+        `
+        return summary
+    })
+
+    
 }
+
 
